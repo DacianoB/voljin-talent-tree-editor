@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101214">
+  <title>Vol'jin CoA Tree Editor</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23d6a556' d='M7 47 25 10l8 22 11-25 13 40-21-15-5 21-8-21z'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!--
+  THESIS: The supplied Vol'jin tree becomes a real editing surface, not a generic diagram app wearing fantasy colors.
+  OWN-WORLD: Charcoal stone, restrained violet class energy, aged gold type, compact forged controls, and the original Witch Doctor field imagery.
+  STORY: Inspect the selected Witch Doctor/Brewing trees, allocate points, enter Edit mode, reshape the tree, then save or share it.
+  FIRST VIEWPORT: CoA Builder title and save controls lead into the class identity, tree tabs, full branching canvas, and a contextual inspector that appears only while editing.
+  FORM: Pinned Ascension reference, first and only direction; seed key pinned-reference-no-roll.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+  -->
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Vol'jin tree editor home">
+      <svg viewBox="0 0 64 38" aria-hidden="true"><path d="M5 28 24 8l8 15L41 5l18 23-21-9-6 14-8-14Z"/><path d="M3 31h58"/></svg>
+      <span>VOL'JIN TREE EDITOR</span>
+    </a>
+    <nav aria-label="Primary">
+      <a href="#builder">BUILDER</a><a href="#help">HOW TO EDIT</a>
+    </nav>
+    <div class="mode-wrap">
+      <span id="save-state">Saved locally</span>
+      <label class="mode-switch"><input id="edit-toggle" type="checkbox"><span></span>Edit mode</label>
+    </div>
+  </header>
+
+  <main id="builder">
+    <h1>CoA Builder</h1>
+    <p class="lede">Vol'jin · Witch Doctor / Brewing</p>
+
+    <section class="global-actions" aria-label="Tree actions">
+      <button id="save-btn" class="button">Save</button>
+      <button id="share-btn" class="button">Share</button>
+      <button id="reset-btn" class="button button-quiet">Reset</button>
+      <button id="refund-btn" class="button button-quiet" aria-pressed="false">Refund</button>
+    </section>
+    <div id="share-row" class="share-row" hidden>
+      <label for="share-url">Shareable editor link</label>
+      <input id="share-url" readonly>
+      <button id="copy-btn" class="button">Copy</button>
+    </div>
+
+    <section class="builder-shell">
+      <header class="class-header">
+        <div class="portrait" aria-hidden="true"><span class="coa-icon" style="background-position:40.7407% 72.2222%"></span></div>
+        <div><strong>Witch Doctor</strong><span>BREWING</span></div>
+        <div class="class-mark" aria-hidden="true"></div>
+      </header>
+      <div class="spec-row"><button class="spec active">Brewing</button></div>
+      <div id="tree-tabs" class="tree-tabs" role="tablist"></div>
+
+      <div class="workspace">
+        <section id="tree-stage" class="tree-stage" aria-label="Talent tree canvas">
+          <div id="tree-canvas" class="tree-canvas">
+            <svg id="lines" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <div id="nodes"></div>
+          </div>
+          <div class="zoom-controls" aria-label="Canvas controls">
+            <button id="zoom-in" aria-label="Zoom in">+</button>
+            <button id="zoom-out" aria-label="Zoom out">−</button>
+            <button id="center-btn" aria-label="Reset zoom"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></button>
+          </div>
+        </section>
+
+        <aside id="inspector" class="inspector" aria-label="Talent inspector" hidden>
+          <div class="inspector-head">
+            <strong id="inspector-title">Select a talent</strong>
+            <button id="close-inspector" class="icon-button" aria-label="Close inspector">×</button>
+          </div>
+          <form id="talent-form">
+            <label>Name<input id="talent-name" required maxlength="80"></label>
+            <label>Description<textarea id="talent-description" rows="5" maxlength="500"></textarea></label>
+            <label>Ascension DB spell IDs<input id="talent-spells" inputmode="numeric" placeholder="Example: 801660, 802703" aria-describedby="spell-id-help spell-load-state"><small id="spell-id-help">Comma-separated IDs. Name, icon, and DB description load automatically.</small><small id="spell-load-state" role="status" aria-live="polite"></small></label>
+            <label class="check-field"><input id="talent-choice" type="checkbox"><span>Two-spell choice node</span><small>Uses the first two IDs as selectable left and right halves.</small></label>
+            <label class="check-field"><input id="talent-changed" type="checkbox"><span>Show change icon</span><small>Adds a small yellow circular-arrows badge to the node's upper-right edge.</small></label>
+            <div class="field-pair">
+              <label>Node shape<select id="talent-shape"><option value="circle">Circle</option><option value="square">Square</option></select></label>
+              <label>Max points<input id="talent-max" type="number" min="1" max="9"></label>
+            </div>
+            <label>Points needed to unlock<input id="talent-threshold" type="number" min="0" step="1"><small>Use 0 for no point requirement.</small></label>
+            <label>Icon image URL<input id="talent-icon" type="url" placeholder="Optional"></label>
+            <button class="button button-accent" type="submit">Apply changes</button>
+          </form>
+          <div class="inspector-actions">
+            <button id="connect-btn" class="button">Connect talent</button>
+            <button id="delete-btn" class="button button-danger">Delete</button>
+          </div>
+          <p id="connect-help" class="connect-help" hidden>Select another talent to add or remove a connection.</p>
+          <button id="add-btn" class="add-talent"><span>+</span>Add new talent</button>
+        </aside>
+      </div>
+      <footer class="statusbar"><span id="status">View mode: click to spend, right-click to refund.</span><span id="node-count"></span></footer>
+    </section>
+
+    <section id="help" class="help">
+      <h2>Editing is direct</h2>
+      <p>Turn on Edit mode, drag any talent, select it to change its content, or connect it to another node. Save keeps the tree in this browser; Share puts the whole editable tree in the link.</p>
+      <p class="source-note">Independent editor inspired by the <a href="https://ascension.gg/en/v2/coa-builder/voljin?build=szI0MjMxLTEE02ZAGgA%253D">Ascension Vol'jin CoA Builder</a>. Game artwork and talent icons remain the property of their respective owners.</p>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
