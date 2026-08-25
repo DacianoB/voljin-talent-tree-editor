@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#101214">
   <title>Vol'jin CoA Tree Editor</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23d6a556' d='M7 47 25 10l8 22 11-25 13 40-21-15-5 21-8-21z'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=20260825-6">
+  <link rel="stylesheet" href="styles.css?v=20260825-7">
 </head>
 <body>
   <!--
@@ -42,17 +42,22 @@
       <button id="reset-btn" class="button button-quiet">Reset tree</button>
       <button id="refund-btn" class="button button-quiet" aria-pressed="false">Refund</button>
     </section>
-    <form id="ascension-import" class="import-row">
-      <label for="ascension-url">Import Ascension build</label>
-      <div><input id="ascension-url" type="text" required maxlength="5000" autocomplete="off" spellcheck="false" placeholder="Paste a Vol'jin CoA Builder link"><button id="import-btn" class="button">Import</button></div>
-      <small id="import-state" role="status" aria-live="polite">Uses the catalog synced daily from Ascension.</small>
-    </form>
-    <form id="tree-browser" class="tree-browser">
-      <label>Class<select id="class-select" aria-describedby="browser-state"><option>Loading classes…</option></select></label>
-      <label>Specialization<select id="spec-select" aria-describedby="browser-state"><option>Loading specializations…</option></select></label>
-      <button id="open-tree-btn" class="button" type="submit" disabled>Open tree</button>
-      <small id="browser-state" role="status" aria-live="polite">Choose any synced class and specialization.</small>
-    </form>
+    <details id="tree-source" class="tree-source">
+      <summary><strong>Choose another tree</strong><span id="source-current">Witch Doctor / Brewing</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7 5 5 5-5"/></svg></summary>
+      <div class="tree-source-panel">
+        <form id="tree-browser" class="tree-browser">
+          <label>Class<select id="class-select" aria-describedby="browser-state"><option>Loading classes…</option></select></label>
+          <label>Specialization<select id="spec-select" aria-describedby="browser-state"><option>Loading specializations…</option></select></label>
+          <button id="open-tree-btn" class="button" type="submit" disabled>Open tree</button>
+          <small id="browser-state" role="status" aria-live="polite">Choose any synced class and specialization.</small>
+        </form>
+        <form id="ascension-import" class="import-row">
+          <label for="ascension-url">Ascension build link</label>
+          <div><input id="ascension-url" type="text" required maxlength="5000" autocomplete="off" spellcheck="false" placeholder="Paste a Vol'jin CoA Builder link"><button id="import-btn" class="button">Import</button></div>
+          <small id="import-state" role="status" aria-live="polite">Imports its class, specialization, and levels.</small>
+        </form>
+      </div>
+    </details>
     <div id="share-row" class="share-row" hidden>
       <label for="share-url">Shareable editor link</label>
       <input id="share-url" readonly>
@@ -120,6 +125,6 @@
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="app.js?v=20260825-8"></script>
+  <script type="module" src="app.js?v=20260825-9"></script>
 </body>
 </html>
