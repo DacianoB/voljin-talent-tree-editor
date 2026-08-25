@@ -12,7 +12,7 @@ Plain HTML, CSS, and JavaScript. Chosen for the easiest local editing and testin
 
 ## Users
 
-Players who want to inspect and customize the Vol'jin talent tree outside the game.
+Players who want to import, inspect, and customize Vol'jin talent trees outside the game.
 
 ## Product Purpose
 
@@ -28,11 +28,11 @@ Desktop-first browser editor with a usable compact/mobile layout. Users switch i
 
 ## Capabilities and Constraints
 
-- Only the selected Vol'jin class/spec is in scope.
+- A pasted Vol'jin CoA Builder link selects its class, specialization, and allocated ranks from a catalog synced daily from Ascension.
 - View mode supports allocating and refunding points.
 - Edit mode supports moving, creating, editing, connecting, deleting, and marking auto-learned passive talents.
 - Saves use browser storage; shares use URL state and require no backend.
-- The referenced Ascension page is the visual and structural reference, not a source of ownership claims.
+- The referenced Ascension page is the scheduled data, visual, and structural reference, not a source of ownership claims.
 
 ## Brand Commitments
 

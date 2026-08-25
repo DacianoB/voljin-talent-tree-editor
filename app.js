@@ -51,9 +51,40 @@ export const decodeState=async value=>{
   const json=await new Response(new Blob([fromBase64Url(value.slice(1))]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
   return JSON.parse(json);
 };
+export const decodeAscensionBuild=async input=>{
+  let token=String(input).trim();
+  if(!token||token.length>5000)throw new Error("Paste a valid Ascension build link.");
+  if(/^https?:/i.test(token)){
+    const url=new URL(token);
+    if(!(url.hostname==="ascension.gg"||url.hostname.endsWith(".ascension.gg"))||!url.pathname.includes("/coa-builder/"))throw new Error("Only Ascension CoA Builder links are supported.");
+    token=url.searchParams.get("build")||"";
+  }
+  for(let i=0;i<3;i++){const decoded=decodeURIComponent(token);if(decoded===token)break;token=decoded}
+  const bytes=fromBase64Url(token),text=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text(),allocations=new Map;
+  for(const match of text.matchAll(/(\d+)t(\d+)/g))allocations.set(+match[1],+match[2]);
+  if(!allocations.size)throw new Error("This link does not contain a selectable CoA build.");
+  return allocations;
+};
+export const catalogBase=(catalog,selection)=>{
+  const classInfo=catalog.classes.find(item=>item.id===selection.classId),classTab=classInfo?.tabs.find(tab=>tab.id===87),spec=classInfo?.tabs.find(tab=>tab.id===selection.specTabId&&tab.id!==87);
+  if(!classInfo||!classTab||!spec)throw new Error("The selected class or specialization is no longer in the catalog.");
+  return {version:1,active:"class",catalog:selection,meta:{className:classInfo.name,specName:spec.name,slug:classInfo.slug},trees:{class:{label:"Class · AE",...structuredClone(classTab.tree)},spec:{label:`${spec.name} · TE`,...structuredClone(spec.tree)}}};
+};
+export const catalogState=(catalog,allocations)=>{
+  const scores=[];
+  for(const classInfo of catalog.classes)for(const tab of classInfo.tabs){const hits=tab.tree.nodes.reduce((sum,node)=>sum+node.entryIds.filter(id=>allocations.has(id)).length,0);if(hits)scores.push({classInfo,tab,hits})}
+  const classInfo=scores.reduce((best,item)=>!best||scores.filter(score=>score.classInfo===item.classInfo).reduce((sum,score)=>sum+score.hits,0)>best.hits?{classInfo:item.classInfo,hits:scores.filter(score=>score.classInfo===item.classInfo).reduce((sum,score)=>sum+score.hits,0)}:best,null)?.classInfo;
+  const spec=scores.filter(item=>item.classInfo===classInfo&&item.tab.id!==87).sort((a,b)=>b.hits-a.hits)[0]?.tab;
+  if(!classInfo||!spec)throw new Error("The selected class or specialization could not be inferred from this build.");
+  const state=catalogBase(catalog,{classId:classInfo.id,specTabId:spec.id});
+  for(const tree of Object.values(state.trees))for(const node of tree.nodes){const index=node.entryIds.findIndex(id=>allocations.has(id));if(index>=0){node.points=Math.min(node.max,allocations.get(node.entryIds[index]));if(node.options)node.choice=index}}
+  Object.values(state.trees).forEach(tree=>syncPassives(tree.nodes));
+  state.active="spec";
+  return state;
+};
 const omittedShareFields=new Set(["id","dbDescription","optionDescriptions","descriptionError","dbName","dbIcon"]);
 const cleanNode=node=>Object.fromEntries(Object.entries(node).filter(([key,value])=>!omittedShareFields.has(key)&&value!==undefined));
-export const packState=(value,original)=>({p:1,a:value.active,t:Object.keys(original.trees).map(key=>{
+export const packState=(value,original)=>({p:1,a:value.active,c:value.catalog||null,t:Object.keys(original.trees).map(key=>{
   const source=value.trees[key],defaults=original.trees[key].nodes,used=new Set(),indices=new Map(source.nodes.map((node,index)=>[node.id,index]));
   const nodes=source.nodes.map(node=>{
     let index=defaults.findIndex((item,i)=>!used.has(i)&&item.id===node.id);
@@ -71,7 +102,7 @@ export const packState=(value,original)=>({p:1,a:value.active,t:Object.keys(orig
 })});
 export const unpackState=(value,original)=>{
   if(value?.p!==1)return value;
-  const result=structuredClone(original);result.active=value.a;
+  const result=structuredClone(original);result.active=value.a;if(value.c)result.catalog=value.c;
   Object.keys(result.trees).forEach((key,treeIndex)=>{
     const packed=value.t[treeIndex],defaults=original.trees[key].nodes;
     const nodes=packed.n.map(([index,changes,removed])=>{const node=index===null?{id:crypto.randomUUID(),...changes}:Object.assign(structuredClone(defaults[index]),changes);for(const field of removed||[])delete node[field];return node});
@@ -92,9 +123,9 @@ export const syncPassives=(nodes,spent=spentPoints(nodes))=>nodes.forEach(node=>
 export const treeBudgets={class:26,spec:25};
 
 if(typeof document!=="undefined"){
-const base={version:1,active:"class",trees:{class:{label:"Class · AE",budget:treeBudgets.class,nodes:classNodes,edges:classEdges},spec:{label:"Brewing · TE",budget:treeBudgets.spec,nodes:specNodes,edges:specEdges}}};
+const base={version:1,active:"class",meta:{className:"Witch Doctor",specName:"Brewing",slug:"witchdoctor"},trees:{class:{label:"Class · AE",budget:treeBudgets.class,nodes:classNodes,edges:classEdges},spec:{label:"Brewing · TE",budget:treeBudgets.spec,nodes:specNodes,edges:specEdges}}};
 const clone=value=>structuredClone(value);
-let state=clone(base),editing=false,refunding=false,selected=null,connectFrom=null,zoom=1,dirty=false,dragMoved=false;
+let stateBase=clone(base),state=clone(base),catalogPromise,editing=false,refunding=false,selected=null,connectFrom=null,zoom=1,dirty=false,dragMoved=false;
 const $=id=>document.getElementById(id),tree=()=>state.trees[state.active],nodeBy=id=>tree().nodes.find(n=>n.id===id);
 const escapeHtml=value=>String(value).replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[char]);
 const parseSpellIds=value=>[...new Set(String(value).split(/[,\s]+/).map(Number).filter(id=>Number.isSafeInteger(id)&&id>0))];
@@ -138,10 +169,12 @@ function loadNodeDescriptions(node){
 }
 
 function validState(value){return value?.version===1&&value.trees?.class?.nodes?.length&&value.trees?.spec?.nodes?.length}
+const loadCatalog=()=>catalogPromise??=fetch("data/voljin.json",{cache:"no-cache"}).then(response=>{if(!response.ok)throw new Error("The Ascension catalog is unavailable.");return response.json()});
+async function prepareBase(selection){stateBase=selection?catalogBase(await loadCatalog(),selection):clone(base)}
 function hydrate(value){
   for(const key of ["class","spec"]){
-    value.trees[key].budget=base.trees[key].budget;
-    const originals=base.trees[key].nodes;
+    value.trees[key].budget=stateBase.trees[key].budget;
+    const originals=stateBase.trees[key].nodes;
     for(const node of value.trees[key].nodes){
       const original=originals.find(item=>item.name===node.name);
       if(!original)continue;
@@ -157,26 +190,27 @@ function hydrate(value){
 async function loadShared(){
   const shared=new URL(location.href).hash.match(/data=([^&]+)/)?.[1];
   if(!shared)return false;
-  const value=unpackState(await decodeState(decodeURIComponent(shared)),base);
-  if(!validState(value))throw new Error("Invalid shared tree");
-  state=hydrate(value);return true;
+  const previousBase=stateBase;
+  try{const packed=await decodeState(decodeURIComponent(shared));await prepareBase(packed?.c||packed?.catalog);const value=unpackState(packed,stateBase);if(!validState(value))throw new Error("Invalid shared tree");state=hydrate(value);return true}
+  catch(error){stateBase=previousBase;throw error}
 }
 async function loadInitial(){
   try{
     if(await loadShared())return;
     const saved=localStorage.getItem("voljin-tree-editor");
-    if(saved){const value=JSON.parse(saved);if(validState(value))state=hydrate(value)}
-  }catch(error){console.warn("Could not load saved tree",error);toast("Saved tree was invalid; loaded the original.")}
+    if(saved){const value=JSON.parse(saved);await prepareBase(value.catalog);if(validState(value))state=hydrate(value)}
+  }catch(error){stateBase=clone(base);state=clone(base);console.warn("Could not load saved tree",error);toast("Saved tree was invalid; loaded the original.")}
 }
 
-function render(){renderTabs();renderTree();renderInspector();updateStatus()}
+function render(){renderIdentity();renderTabs();renderTree();renderInspector();updateStatus()}
+function renderIdentity(){const meta=state.meta||base.meta;$("builder-subtitle").textContent=`Vol'jin · ${meta.className} / ${meta.specName}`;$('class-name').textContent=meta.className;$('spec-name').textContent=meta.specName.toUpperCase();$('spec-button').textContent=meta.specName;const image=state.trees.class.nodes[0]?.image;$('class-icon').style.cssText=image?`background-image:url('${image}');background-size:cover;background-position:center`:"background-position:40.7407% 72.2222%";$('tree-stage').style.setProperty("--tree-bg",`url('https://ascension.gg/textures/coa/trees/${meta.slug}.webp')`)}
 function renderTabs(){
-  $("tree-tabs").innerHTML=Object.entries(state.trees).map(([key,t])=>{const spent=spentPoints(t.nodes);return `<button class="tree-tab ${key===state.active?"active":""}" role="tab" aria-selected="${key===state.active}" data-tab="${key}"><span><strong>${t.label}</strong><small>${Math.max(0,t.budget-spent)} left</small></span><span><b>${spent}</b> <em>/ ${t.budget}</em></span></button>`}).join("");
+  $("tree-tabs").innerHTML=Object.entries(state.trees).map(([key,t])=>{const spent=spentPoints(t.nodes);return `<button class="tree-tab ${key===state.active?"active":""}" role="tab" aria-selected="${key===state.active}" data-tab="${key}"><span><strong>${t.label}</strong>${editing?"":`<small>${Math.max(0,t.budget-spent)} left</small>`}</span>${editing?"":`<span><b>${spent}</b> <em>/ ${t.budget}</em></span>`}</button>`}).join("");
   $("tree-tabs").querySelectorAll("button").forEach(button=>button.onclick=()=>{state.active=button.dataset.tab;selected=null;connectFrom=null;render()})
 }
 function renderLines(){
   const t=tree(),spent=spentPoints(t.nodes);
-  $("lines").innerHTML=t.edges.map(([a,b])=>{const x=nodeBy(a),y=nodeBy(b);if(!x||!y)return "";const path=pathState(x,y,t.nodes,t.edges,spent,t.budget);const chosen=selected&&(a===selected||b===selected);return `<line class="edge-under" x1="${x.x*10}" y1="${x.y*10}" x2="${y.x*10}" y2="${y.y*10}"/><line class="edge ${path} ${chosen?"selected":""}" x1="${x.x*10}" y1="${x.y*10}" x2="${y.x*10}" y2="${y.y*10}"/>`}).join("")
+  $("lines").innerHTML=t.edges.map(([a,b])=>{const x=nodeBy(a),y=nodeBy(b);if(!x||!y)return "";const path=editing?"":pathState(x,y,t.nodes,t.edges,spent,t.budget);const chosen=!editing&&selected&&(a===selected||b===selected);return `<line class="edge-under" x1="${x.x*10}" y1="${x.y*10}" x2="${y.x*10}" y2="${y.y*10}"/><line class="edge ${path} ${chosen?"selected":""}" x1="${x.x*10}" y1="${x.y*10}" x2="${y.x*10}" y2="${y.y*10}"/>`}).join("")
 }
 function renderTree(){
   $("tree-stage").classList.toggle("editing",editing);$("tree-canvas").style.setProperty("--zoom",zoom);renderLines();
@@ -189,8 +223,8 @@ function renderTree(){
     const description=n.description||(n.options?"":n.dbDescription||(n.descriptionError||"Loading description from Ascension DB…"));
     const edgeClass=n.y<18?"tooltip-below":n.x<20?"tooltip-right":n.x>80?"tooltip-left":"";
     const thresholdLocked=!meetsThreshold(n,spent),flowLocked=!hasActiveUpperConnection(n,t.nodes,t.edges),locked=thresholdLocked||flowLocked,available=canSelectNode(n,t.nodes,t.edges,spent,t.budget);
-    const threshold=thresholdLocked?`<span class="threshold-note">Requires ${n.threshold} points in this tree (${spent}/${n.threshold})</span>`:flowLocked?`<span class="threshold-note">Requires 1 point in a connected talent above</span>`:"";
-    return `<div class="node ${n.shape==="square"?"square":""} ${n.changed?"changed":""} ${n.options?.length?"choice":""} ${edgeClass} ${n.points?"invested":""} ${available?"available":""} ${locked?"locked":""} ${n.id===selected?"selected":""} ${n.id===connectFrom?"connect-source":""}" data-id="${n.id}" data-choice="${n.choice||0}" style="left:${n.x}%;top:${n.y}%"><button class="node-button" aria-label="${escapeHtml(n.name)}${n.changed?", changed":""}. ${thresholdLocked?`Locked; requires ${n.threshold} points. `:flowLocked?"Locked; requires 1 point in a connected talent above. ":""}${editing?"Select or drag talent":`${n.points} of ${n.max} points${n.options?.length?"; choose the left or right talent":""}`}">${icon}</button><span class="points">${n.points}/${n.max}</span>${n.changed?`<span class="changed-pill" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 10a6.5 6.5 0 0 1 11-3M14 6.8 17 7l.2-3M18 14a6.5 6.5 0 0 1-11 3M10 17.2 7 17l-.2 3"/></svg></span>`:""}<span class="tooltip"><strong>${escapeHtml(n.name)}</strong>${threshold}${description?`<span>${escapeHtml(description)}</span>`:""}${links}</span></div>`;
+    const threshold=editing?"":thresholdLocked?`<span class="threshold-note">Requires ${n.threshold} points in this tree (${spent}/${n.threshold})</span>`:flowLocked?`<span class="threshold-note">Requires 1 point in a connected talent above</span>`:"";
+    return `<div class="node ${n.shape==="square"?"square":""} ${n.changed?"changed":""} ${n.options?.length?"choice":""} ${edgeClass} ${!editing&&n.points?"invested":""} ${!editing&&available?"available":""} ${!editing&&locked?"locked":""} ${n.id===selected?"selected":""} ${n.id===connectFrom?"connect-source":""}" data-id="${n.id}" data-choice="${n.choice||0}" style="left:${n.x}%;top:${n.y}%"><button class="node-button" aria-label="${escapeHtml(n.name)}${n.changed?", changed":""}. ${!editing&&thresholdLocked?`Locked; requires ${n.threshold} points. `:!editing&&flowLocked?"Locked; requires 1 point in a connected talent above. ":""}${editing?"Select or drag talent":`${n.points} of ${n.max} points${n.options?.length?"; choose the left or right talent":""}`}">${icon}</button>${editing?"":`<span class="points">${n.points}/${n.max}</span>`}${n.changed?`<span class="changed-pill" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 10a6.5 6.5 0 0 1 11-3M14 6.8 17 7l.2-3M18 14a6.5 6.5 0 0 1-11 3M10 17.2 7 17l-.2 3"/></svg></span>`:""}<span class="tooltip"><strong>${escapeHtml(n.name)}</strong>${threshold}${description?`<span>${escapeHtml(description)}</span>`:""}${links}</span></div>`;
   }).join("");
   $("nodes").querySelectorAll(".node").forEach(bindNode)
   if(innerWidth<=520&&!$("tree-stage").dataset.centered)requestAnimationFrame(()=>{$("tree-stage").scrollLeft=($("tree-stage").scrollWidth-$("tree-stage").clientWidth)/2;$("tree-stage").dataset.centered="true"})
@@ -253,11 +287,12 @@ $("add-btn").onclick=()=>{const n=N("New Talent",50,50);n.description="Describe 
 $("delete-btn").onclick=()=>{if(!selected)return;tree().nodes=tree().nodes.filter(n=>n.id!==selected);tree().edges=tree().edges.filter(e=>!e.includes(selected));selected=null;connectFrom=null;markDirty();render();toast("Talent deleted.")};
 $("connect-btn").onclick=()=>{connectFrom=connectFrom?null:selected;render()};
 $("close-inspector").onclick=()=>{selected=null;connectFrom=null;render()};
+$("ascension-import").onsubmit=async event=>{event.preventDefault();const button=$("import-btn"),status=$("import-state");button.disabled=true;status.textContent="Loading the scheduled Ascension catalog…";try{const catalog=await loadCatalog(),imported=catalogState(catalog,await decodeAscensionBuild($("ascension-url").value));stateBase=catalogBase(catalog,imported.catalog);state=imported;editing=false;refunding=false;selected=null;connectFrom=null;$("edit-toggle").checked=false;history.replaceState(null,"",location.pathname+location.search);markDirty();render();status.textContent=`Loaded ${state.meta.className} / ${state.meta.specName}.`;toast("Ascension build imported.")}catch(error){console.warn("Could not import Ascension build",error);status.textContent=error.message;toast("Ascension build could not be imported.")}finally{button.disabled=false}};
 $("save-btn").onclick=()=>{localStorage.setItem("voljin-tree-editor",JSON.stringify(state));dirty=false;updateStatus();toast("Tree saved in this browser.")};
-$("share-btn").onclick=async()=>{const url=new URL(location.href);url.hash=`data=${await encodeState(packState(state,base))}`;$("share-url").value=url.href;$("share-row").hidden=false;try{await navigator.clipboard.writeText(url.href);toast("Share link copied.")}catch{toast("Share link ready below.")}};
+$("share-btn").onclick=async()=>{const url=new URL(location.href);url.hash=`data=${await encodeState(packState(state,stateBase))}`;$("share-url").value=url.href;$("share-row").hidden=false;try{await navigator.clipboard.writeText(url.href);toast("Share link copied.")}catch{toast("Share link ready below.")}};
 $("copy-btn").onclick=async()=>{try{await navigator.clipboard.writeText($("share-url").value);toast("Share link copied.")}catch{$("share-url").select();document.execCommand("copy");toast("Share link copied.")}};
 $("reset-levels-btn").onclick=()=>{if(!confirm("Reset levels in both trees? Your tree edits will be kept."))return;Object.values(state.trees).forEach(t=>{resetLevels(t.nodes);syncPassives(t.nodes)});markDirty();render();toast("Talent levels reset.")};
-$("reset-btn").onclick=()=>{if(!confirm("Reset both trees to the original Vol'jin layout?"))return;state=clone(base);selected=null;connectFrom=null;dirty=false;localStorage.removeItem("voljin-tree-editor");history.replaceState(null,"",location.pathname+location.search);$("share-row").hidden=true;render();toast("Original tree restored.")};
+$("reset-btn").onclick=()=>{if(!confirm("Reset both trees to the imported layout?"))return;state=clone(stateBase);selected=null;connectFrom=null;dirty=false;localStorage.removeItem("voljin-tree-editor");history.replaceState(null,"",location.pathname+location.search);$("share-row").hidden=true;render();toast("Original tree restored.")};
 $("zoom-in").onclick=()=>{zoom=Math.min(1.5,zoom+.1);renderTree()};$("zoom-out").onclick=()=>{zoom=Math.max(.65,zoom-.1);renderTree()};$("center-btn").onclick=()=>{zoom=1;renderTree()};
 addEventListener("hashchange",async()=>{try{if(!await loadShared())return;selected=null;connectFrom=null;refunding=false;dirty=false;$("share-row").hidden=true;render();toast("Shared tree loaded.")}catch(error){console.warn("Could not load shared tree",error);toast("Shared tree link is invalid.")}});
 

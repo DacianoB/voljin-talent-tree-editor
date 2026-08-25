@@ -164,7 +164,7 @@ The palette is nearly black and mineral, with aged gold for hierarchy and violet
 
 ## Layout
 
-The page sits in a centered 1280px maximum-width frame beneath a sticky 66px top bar. The builder flows from title and global actions into class identity, specialization, two tree tabs, and a full branching workspace. The tree canvas is a square up to 790px wide inside a stage with a 790px desktop minimum height.
+The page sits in a centered 1280px maximum-width frame beneath a sticky 66px top bar. The builder flows from title and global actions through a compact Ascension-link import field into class identity, specialization, two tree tabs, and a full branching workspace. The tree canvas is a square up to 790px wide inside a stage with a 790px desktop minimum height.
 
 Edit mode reveals a 310px contextual inspector beside the canvas. At 800px and below, the workspace stacks, tabs become single-column, and the inspector moves below the tree. At 520px and below, the canvas stays 620px wide inside a horizontally scrollable stage, talent nodes reduce from 50px to 44px, and the builder reaches the viewport edges.
 
@@ -220,7 +220,7 @@ The top bar is a sticky 66px charcoal strip. Brand and nav links use compact bol
 
 ### Talent Tree Canvas
 
-The canvas preserves the supplied node positions and connection geometry over locally sourced Witch Doctor field imagery. In view mode, tap or click allocates points and right-click or Refund removes them. Available talents and incoming paths are green; talents with at least one level and connections between leveled talents are bright allocation yellow. Passives are free and auto-learn when their configured point requirement is reached. In Edit mode, unallocated node borders turn violet, pointer drag reshapes the tree, selection turns white, and connection source turns cyan with a reduced-motion-safe pulse. On compact touch screens the stage keeps horizontal panning, while node dragging takes touch ownership only during Edit mode.
+The canvas preserves the imported node positions and connection geometry over class field imagery. In view mode, tap or click allocates points and right-click or Refund removes them. Available talents and incoming paths are green; talents with at least one level and connections between leveled talents are bright allocation yellow. Passives are free and auto-learn when their configured point requirement is reached. Edit mode shows the whole tree in neutral, fully colored form without allocation counters or pathway-state colors; selection turns white and connection source turns cyan. On compact touch screens the stage keeps horizontal panning, while node dragging takes touch ownership only during Edit mode.
 
 **The Canvas Gesture Rule.** Preserve the touch pan/drag split: the compact stage pans in view mode, and talent nodes capture touch only when editing.
 

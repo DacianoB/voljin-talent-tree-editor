@@ -1,4 +1,5 @@
-import {canSelectNode,classNodes,dbSpellUrl,decodeState,encodeState,hasActiveUpperConnection,meetsThreshold,packState,pathState,resetLevels,specNodes,spentPoints,syncPassives,toggleEdge,treeBudgets,unpackState} from "./app.js";
+import {readFile} from "node:fs/promises";
+import {canSelectNode,catalogState,classNodes,dbSpellUrl,decodeAscensionBuild,decodeState,encodeState,hasActiveUpperConnection,meetsThreshold,packState,pathState,resetLevels,specNodes,spentPoints,syncPassives,toggleEdge,treeBudgets,unpackState} from "./app.js";
 
 const sample={name:"Vol'jin",talents:[{name:"Mirage",shape:"square",changed:true,threshold:7}]};
 const encoded=await encodeState(sample);
@@ -9,6 +10,8 @@ const shareBase={version:1,active:"class",trees:{class:{nodes:[{id:"old",name:"R
 shareEdit.trees.class.nodes[0].x=9;shareEdit.trees.class.nodes.splice(1,1,{id:"new",name:"Custom",x:2,points:1});shareEdit.trees.class.edges.push(["old","new"]);
 const restored=unpackState(packState(shareEdit,shareBase),shareBase);
 console.assert(restored.trees.class.nodes[0].x===9&&restored.trees.class.nodes[1].name==="Custom"&&!restored.trees.class.nodes.some(node=>node.name==="Delete")&&restored.trees.class.edges.length===1,"packed links must preserve edits, additions, deletions, and connections");
+const ascensionUrl="https://ascension.gg/en/v2/coa-builder/voljin?build=szIxNTAtMbQCAA%253D%253D",allocations=await decodeAscensionBuild(ascensionUrl),catalog=JSON.parse(await readFile(new URL("./data/voljin.json",import.meta.url))),imported=catalogState(catalog,allocations),reclamation=imported.trees.spec.nodes.find(node=>node.entryIds.includes(4505));
+console.assert(allocations.get(4505)===1&&imported.meta.className==="Witch Doctor"&&imported.meta.specName==="Shadowhunting"&&reclamation.points===1,"Ascension links must select and allocate the matching scheduled class/spec tree");
 console.assert(toggleEdge([],"a","b").length===1,"connection must be added");
 console.assert(toggleEdge([["a","b"]],"a","b").length===0,"connection must be removed");
 console.assert([...classNodes,...specNodes].every(node=>node.spellIds?.every(Number.isSafeInteger)),"imported talents must keep their spell IDs");

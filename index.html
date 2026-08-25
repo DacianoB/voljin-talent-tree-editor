@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#101214">
   <title>Vol'jin CoA Tree Editor</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23d6a556' d='M7 47 25 10l8 22 11-25 13 40-21-15-5 21-8-21z'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=20260825-3">
+  <link rel="stylesheet" href="styles.css?v=20260825-5">
 </head>
 <body>
   <!--
@@ -33,7 +33,7 @@
 
   <main id="builder">
     <h1>CoA Builder</h1>
-    <p class="lede">Vol'jin · Witch Doctor / Brewing</p>
+    <p id="builder-subtitle" class="lede">Vol'jin · Witch Doctor / Brewing</p>
 
     <section class="global-actions" aria-label="Tree actions">
       <button id="save-btn" class="button">Save</button>
@@ -42,6 +42,11 @@
       <button id="reset-btn" class="button button-quiet">Reset tree</button>
       <button id="refund-btn" class="button button-quiet" aria-pressed="false">Refund</button>
     </section>
+    <form id="ascension-import" class="import-row">
+      <label for="ascension-url">Import Ascension build</label>
+      <div><input id="ascension-url" type="text" required maxlength="5000" autocomplete="off" spellcheck="false" placeholder="Paste a Vol'jin CoA Builder link"><button id="import-btn" class="button">Import</button></div>
+      <small id="import-state" role="status" aria-live="polite">Uses the catalog synced daily from Ascension.</small>
+    </form>
     <div id="share-row" class="share-row" hidden>
       <label for="share-url">Shareable editor link</label>
       <input id="share-url" readonly>
@@ -50,11 +55,11 @@
 
     <section class="builder-shell">
       <header class="class-header">
-        <div class="portrait" aria-hidden="true"><span class="coa-icon" style="background-position:40.7407% 72.2222%"></span></div>
-        <div><strong>Witch Doctor</strong><span>BREWING</span></div>
+        <div class="portrait" aria-hidden="true"><span id="class-icon" class="coa-icon" style="background-position:40.7407% 72.2222%"></span></div>
+        <div><strong id="class-name">Witch Doctor</strong><span id="spec-name">BREWING</span></div>
         <div class="class-mark" aria-hidden="true"></div>
       </header>
-      <div class="spec-row"><button class="spec active">Brewing</button></div>
+      <div class="spec-row"><button id="spec-button" class="spec active">Brewing</button></div>
       <div id="tree-tabs" class="tree-tabs" role="tablist"></div>
 
       <div class="workspace">
@@ -109,6 +114,6 @@
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="app.js?v=20260825-5"></script>
+  <script type="module" src="app.js?v=20260825-7"></script>
 </body>
 </html>

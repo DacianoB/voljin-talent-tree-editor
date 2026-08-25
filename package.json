@@ -3,6 +3,7 @@
   "scripts": {
     "dev": "python -m http.server 4173",
     "start": "python -m http.server 4173",
-    "test": "node test.mjs"
+    "test": "node test.mjs",
+    "sync:ascension": "node scripts/sync-ascension.mjs"
   }
 }

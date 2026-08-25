@@ -1,0 +1,28 @@
+name: Sync Ascension catalog
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm run sync:ascension
+      - run: npm test
+      - name: Commit catalog changes
+        run: |
+          if git diff --quiet -- data/voljin.json; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/voljin.json
+          git commit -m "Update Ascension talent catalog"
+          git push
