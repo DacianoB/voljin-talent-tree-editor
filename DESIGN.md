@@ -11,8 +11,9 @@ colors:
   bone-ink: "#f3f0e9"
   ash-muted: "#aaa7a1"
   aged-gold: "#d6a556"
+  allocation-yellow: "#ffd447"
   ritual-violet: "#e100db"
-  invested-green: "#12c785"
+  available-green: "#66d94f"
   focus-gold: "#f2c66d"
 typography:
   display:
@@ -107,7 +108,7 @@ components:
 
 The interface treats the supplied Vol'jin tree as a real working artifact: a dense charcoal editing bench lit by restrained class energy, not a generic diagram tool decorated after the fact. Aged gold Beaufort headings carry the fantasy lineage while compact system-font controls keep allocation and authoring quick to scan.
 
-The canvas remains the visual center. Original Witch Doctor field imagery and the CoA icon sprite sit beneath exact branching geometry; forged panels, fine iron borders, and low ambient shadows organize the tool without competing with the tree. Violet means class identity or active editing, while green, yellow, and cyan appear only for invested, selected, and connection states.
+The canvas remains the visual center. Original Witch Doctor field imagery and the CoA icon sprite sit beneath exact branching geometry; forged panels, fine iron borders, and low ambient shadows organize the tool without competing with the tree. Violet means class identity or active editing, green marks currently available talents and paths, bright allocation yellow marks leveled talents and their connections, and cyan marks connection-authoring state.
 
 **Key Characteristics:**
 
@@ -123,12 +124,13 @@ The palette is nearly black and mineral, with aged gold for hierarchy and violet
 
 ### Primary
 
-- **Ritual Violet:** Class identity, the active tree tab, edit-mode borders, and connected paths.
+- **Ritual Violet:** Class identity, the active tree tab, and edit-mode borders.
 - **Aged Gold:** Display headings and tooltip titles that need fantasy authority without becoming interactive accents.
 
 ### Secondary
 
-- **Invested Green:** The single allocation-success signal on purchased talents.
+- **Available Green:** Talents currently selectable and their available incoming paths.
+- **Allocation Yellow:** Talents with at least one level and connections between leveled talents.
 - **Focus Gold:** The universal keyboard focus ring across buttons, links, and fields.
 
 ### Neutral
@@ -218,7 +220,7 @@ The top bar is a sticky 66px charcoal strip. Brand and nav links use compact bol
 
 ### Talent Tree Canvas
 
-The canvas preserves the supplied node positions and connection geometry over locally sourced Witch Doctor field imagery. In view mode, tap or click allocates points and right-click or Refund removes them. In Edit mode, node borders turn violet, pointer drag reshapes the tree, selection turns yellow, and connection source turns cyan with a reduced-motion-safe pulse. On compact touch screens the stage keeps horizontal panning, while node dragging takes touch ownership only during Edit mode.
+The canvas preserves the supplied node positions and connection geometry over locally sourced Witch Doctor field imagery. In view mode, tap or click allocates points and right-click or Refund removes them. Available talents and incoming paths are green; talents with at least one level and connections between leveled talents are bright allocation yellow. Passives are free and auto-learn when their configured point requirement is reached. In Edit mode, unallocated node borders turn violet, pointer drag reshapes the tree, selection turns white, and connection source turns cyan with a reduced-motion-safe pulse. On compact touch screens the stage keeps horizontal panning, while node dragging takes touch ownership only during Edit mode.
 
 **The Canvas Gesture Rule.** Preserve the touch pan/drag split: the compact stage pans in view mode, and talent nodes capture touch only when editing.
 
@@ -227,7 +229,7 @@ The canvas preserves the supplied node positions and connection geometry over lo
 ### Do:
 
 - **Do** preserve the exact Witch Doctor/Brewing tree data, positions, and connection geometry when extending the interface.
-- **Do** keep violet stateful and restrained, with green for invested talents, yellow for selection, and cyan for connection source.
+- **Do** keep violet stateful and restrained, with green for available talents, bright yellow for leveled talents, and cyan for connection source.
 - **Do** use Beaufort for display hierarchy and system UI for dense operational text.
 - **Do** retain keyboard focus treatment, reduced-motion behavior, and the compact touch pan/drag split.
 - **Do** keep every shipping raster local and pair it with source, purpose, date, and rights provenance.

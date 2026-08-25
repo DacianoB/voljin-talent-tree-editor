@@ -30,7 +30,7 @@ Desktop-first browser editor with a usable compact/mobile layout. Users switch i
 
 - Only the selected Vol'jin class/spec is in scope.
 - View mode supports allocating and refunding points.
-- Edit mode supports moving, creating, editing, connecting, and deleting talents.
+- Edit mode supports moving, creating, editing, connecting, deleting, and marking auto-learned passive talents.
 - Saves use browser storage; shares use URL state and require no backend.
 - The referenced Ascension page is the visual and structural reference, not a source of ownership claims.
 

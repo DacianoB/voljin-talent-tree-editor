@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#101214">
   <title>Vol'jin CoA Tree Editor</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23d6a556' d='M7 47 25 10l8 22 11-25 13 40-21-15-5 21-8-21z'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20260825-3">
 </head>
 <body>
   <!--
@@ -38,7 +38,8 @@
     <section class="global-actions" aria-label="Tree actions">
       <button id="save-btn" class="button">Save</button>
       <button id="share-btn" class="button">Share</button>
-      <button id="reset-btn" class="button button-quiet">Reset</button>
+      <button id="reset-levels-btn" class="button button-quiet">Reset levels</button>
+      <button id="reset-btn" class="button button-quiet">Reset tree</button>
       <button id="refund-btn" class="button button-quiet" aria-pressed="false">Refund</button>
     </section>
     <div id="share-row" class="share-row" hidden>
@@ -79,6 +80,7 @@
             <label>Description<textarea id="talent-description" rows="5" maxlength="500"></textarea></label>
             <label>Ascension DB spell IDs<input id="talent-spells" inputmode="numeric" placeholder="Example: 801660, 802703" aria-describedby="spell-id-help spell-load-state"><small id="spell-id-help">Comma-separated IDs. Name, icon, and DB description load automatically.</small><small id="spell-load-state" role="status" aria-live="polite"></small></label>
             <label class="check-field"><input id="talent-choice" type="checkbox"><span>Two-spell choice node</span><small>Uses the first two IDs as selectable left and right halves.</small></label>
+            <label class="check-field"><input id="talent-passive" type="checkbox"><span>Passive talent</span><small>Automatically learned when the required points are spent and does not consume a point.</small></label>
             <label class="check-field"><input id="talent-changed" type="checkbox"><span>Show change icon</span><small>Adds a small yellow circular-arrows badge to the node's upper-right edge.</small></label>
             <div class="field-pair">
               <label>Node shape<select id="talent-shape"><option value="circle">Circle</option><option value="square">Square</option></select></label>
@@ -107,6 +109,6 @@
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=20260825-5"></script>
 </body>
 </html>
