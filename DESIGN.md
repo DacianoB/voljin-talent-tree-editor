@@ -164,7 +164,7 @@ The palette is nearly black and mineral, with aged gold for hierarchy and violet
 
 ## Layout
 
-The page sits in a centered 1280px maximum-width frame beneath a sticky 66px top bar. The builder flows from title and global actions through a compact Ascension-link import field into class identity, specialization, two tree tabs, and a full branching workspace. The tree canvas is a square up to 790px wide inside a stage with a 790px desktop minimum height.
+The page sits in a centered 1280px maximum-width frame beneath a sticky 66px top bar. The builder flows from title and global actions through compact Ascension-link import and class/spec selection fields into class identity, two tree tabs, and a full branching workspace. The tree canvas is a square up to 790px wide inside a stage with a 790px desktop minimum height.
 
 Edit mode reveals a 310px contextual inspector beside the canvas. At 800px and below, the workspace stacks, tabs become single-column, and the inspector moves below the tree. At 520px and below, the canvas stays 620px wide inside a horizontally scrollable stage, talent nodes reduce from 50px to 44px, and the builder reaches the viewport edges.
 

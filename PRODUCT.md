@@ -29,6 +29,7 @@ Desktop-first browser editor with a usable compact/mobile layout. Users switch i
 ## Capabilities and Constraints
 
 - A pasted Vol'jin CoA Builder link selects its class, specialization, and allocated ranks from a catalog synced daily from Ascension.
+- A class/spec picker opens any synced premade tree directly for editing.
 - View mode supports allocating and refunding points.
 - Edit mode supports moving, creating, editing, connecting, deleting, and marking auto-learned passive talents.
 - Saves use browser storage; shares use URL state and require no backend.
